@@ -1,15 +1,22 @@
-# Example of how to use adc_reader. It will plot one frame.
+""" Example of how to use adc_reader. It will plot one frame. """
 
 import adc_reader
 import numpy as np
 
-from pylab import *
+import pylab
 
-data = np.zeros(10000)
+def main():
+  """ Reads data from the ADC and plots it on screen. """
+  data = np.zeros(10000)
 
-reader = adc_reader.ADCReader()
-reader.GetFrame(data)
+  reader = adc_reader.ADCReader()
+  reader.GetFrame(data)
 
-plot(data)
-show()
+  pylab.plot(data)
+  pylab.show()
+
+
+if __name__ == "__main__":
+  main()
+
 

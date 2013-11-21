@@ -1,9 +1,20 @@
 cmake_minimum_required (VERSION 2.6)
 project (UchUltrasonicAnemometer)
 
+
+add_custom_target(lint)
+add_dependencies(lint pylint cpplint)
+file(GLOB CC_SOURCES RELATIVE ${CMAKE_CURRENT_BINARY_DIR} *.cc *.h)
+add_custom_target(cpplint
+  COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/cpplint.py --root=software ${CC_SOURCES}
+)
 # Copy python files to build directory so they can find the compiled swig
 # wrappers
 function(add_python_source)
+  add_custom_target(pylint
+    COMMAND pylint --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc ${ARGN}
+  )
+
   foreach(file ${ARGN})
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${file}
@@ -12,6 +23,7 @@ function(add_python_source)
 
     STRING(REGEX REPLACE "/" "_" target_name ${CMAKE_CURRENT_BINARY_DIR}/${file})
     add_custom_target(${target_name} ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${file})
+    add_dependencies(pylint ${target_name})
 
   endforeach()
 endfunction()
