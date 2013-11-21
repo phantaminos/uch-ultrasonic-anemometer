@@ -2,8 +2,6 @@ cmake_minimum_required (VERSION 2.6)
 project (UchUltrasonicAnemometer)
 
 
-add_custom_target(lint)
-add_dependencies(lint pylint cpplint)
 file(GLOB CC_SOURCES RELATIVE ${CMAKE_CURRENT_BINARY_DIR} *.cc *.h)
 add_custom_target(cpplint
   COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/cpplint.py --root=software ${CC_SOURCES}
