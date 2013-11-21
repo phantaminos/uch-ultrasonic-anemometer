@@ -35,7 +35,14 @@ find_package(PythonLibs)
 include_directories(${PYTHON_INCLUDE_PATH})
 
 #python targets
-add_python_source(plot_from_adc.py)
+add_python_source(
+  plot_from_adc.py
+  data_preprocessing.py
+  data_preprocessing_test.py
+  test_utilities.py
+  utilities.py
+  )
+
 
 # Swig targets
 SET_SOURCE_FILES_PROPERTIES(adc_reader.i PROPERTIES CPLUSPLUS ON)
