@@ -16,100 +16,22 @@
 #
 # Authors: Karel Mundnich <kmundnic@ing.uchile.cl>
 
-import data_preprocessing as dpp
 import utilities
-
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.io import netcdf
-import scipy as sp
+import unittest
 
-path = '/Users/karel/Dropbox/Anemometro/AnemometroSonico/samples/20131108'
-number_of_measurements = 100
-measurements_on_file = 1
-
-echoes_noecho = []
-echoes_v_zero = []
-
-for measurement in range(number_of_measurements):
-  # No echo: Load data
-  f = netcdf.netcdf_file(path + '/noecho/_%04d.nc'%(measurement), 'r')
-  measurement_noecho = f.variables['frame']
-  f.close()
+class TestUtilities(unittest.TestCase):
   
-  # Concatenate the new list from split_frame into the echoes list
-  echoes_noecho = echoes_noecho + dpp.split_frame(measurement_noecho.data, 
-                                                  measurements_on_file)
-  
-  plt.figure(1)
-  plt.subplot(211) 
-  plt.plot(echoes_noecho[measurement]['NORTH'],'r')
-  plt.grid(True)
-  plt.subplot(212)
-  plt.plot(echoes_noecho[measurement]['SOUTH'], 'r')
-  plt.grid(True)
-  
-  # v = 0: Load data
-  f = netcdf.netcdf_file(path + '/v_zero/_%04d.nc'%(measurement), 'r')
-  measurement_v_zero = f.variables['frame']
-  f.close()
-  
-  # Concatenate the new list from split_frame into the echoes list
-  echoes_v_zero = echoes_v_zero + dpp.split_frame(measurement_v_zero.data, 
-                                                  measurements_on_file)
-  
-  plt.figure(1)
-  plt.subplot(211) 
-  plt.plot(echoes_noecho[measurement]['NORTH'],'r')
-  plt.grid(True)
-  plt.subplot(212)
-  plt.plot(echoes_noecho[measurement]['SOUTH'], 'r')
-  plt.grid(True)
-  
-  plt.figure(2)
-  plt.subplot(211) 
-  plt.plot(echoes_v_zero[measurement]['NORTH'],'r')
-  plt.grid(True)
-  plt.subplot(212)
-  plt.plot(echoes_v_zero[measurement]['SOUTH'], 'r')
-  plt.grid(True)
-
-# Average
-average_noecho = utilities.average(echoes_noecho)
-
-plt.figure(1)
-plt.subplot(211)
-plt.plot(average_noecho['NORTH'],'k')
-
-plt.subplot(212)
-plt.plot(average_noecho['SOUTH'],'k')
-
-average_v_zero = utilities.average(echoes_v_zero)
-
-plt.figure(2)
-plt.subplot(211)
-plt.plot(average_v_zero['NORTH'],'k')
-
-plt.subplot(212)
-plt.plot(average_v_zero['SOUTH'],'k')
-
-
-# Zero crossings
-t_zeros = utilities.zero_crossings(utilities.calibrate(average_v_zero, average_noecho))
-
-plt.figure(3)
-plt.subplot(211)
-plt.plot(average_v_zero['NORTH'] - average_noecho['NORTH'])
-plt.plot(t_zeros['NORTH'], [0]*len(t_zeros['NORTH']),'*k')
-plt.grid(True)
-plt.axvline(142, linestyle = '--', color = 'r')
-plt.legend(('Calibrated signal','Zero crossings','ToF'))
-plt.ylabel('Amplitude')
-plt.xlabel('Samples')
-
-plt.subplot(212)
-plt.plot(t_zeros['NORTH'][:-1], np.diff(t_zeros['NORTH']))
-plt.grid(True)
-plt.axvline(142, linestyle = '--', color = 'r')
-plt.ylabel('Zero crossings difference')
-plt.xlabel('Samples')
+  def setUp(self):
+    # Data paths
+    self.file_noecho = './test_data/frame_no_echo.nc'
+    
+  def test_load_data_from_file(self):
+    self.assertEqual(type(utilities.load_data_from_file(self.file_noecho)),
+                     np.ndarray)
+    self.assertNotEqual(type(self.echoes_noecho), dict)
+    self.assertRaises(IOError, utilities.load_data_from_file, 
+                      'non_existent_file.nc')
+                     
+if __name__ == '__main__':
+  unittest.main()
