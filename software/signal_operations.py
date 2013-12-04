@@ -72,3 +72,78 @@ def zero_crossings(echoes):
                          echoes[direction][zero_crossings[direction]]/m
  
   return t_zeros
+  
+def differentiate(echoes):
+  """ Calculate numpy.diff() for every direction in 
+      data_preprocessing.DIRECTIONS.
+  """
+  echoes_diff = dict()
+  for direction in dpp.DIRECTIONS:
+    echoes_diff[direction] = np.diff(echoes[direction])
+    
+  return echoes_diff
+    
+def substract_mean(echoes):
+  """ Subtract the mean of and echo structure, using the direction in 
+      data_preprocessing.DIRECTIONS.
+  """
+  echoes_minus_mean = dict()
+  
+  for direction in dpp.DIRECTIONS:
+    echoes_minus_mean[direction] = (echoes[direction] - 
+                                    np.mean(echoes[direction]
+                                                  [0:dpp.EXCITATION_LENGTH/3]))
+
+  return echoes_minus_mean
+  
+def argmax(echoes):
+  """ Calculate the argument of the maximum amplitude for an echo structure,
+      using the directions in data_preprocessing.DIRECTIONS.
+  """  
+  argmax = dict()
+  for direction in dpp.DIRECTIONS:
+    argmax[direction] = np.argmax(echoes[direction])
+
+  return argmax
+
+def time_of_flight_phase_detection(echoes):
+  """ Calculate the time of flight for an echo structure through phase detection
+      using the zero crossings of the signal.
+      This function returns the time of flight of the preprocessed echo, the 
+      argument of the maximum value of the echo, and the argument of the time of
+      flight.
+  """  
+  time_of_flight = dict()
+  arg = dict()
+  arg_init = dict()
+
+  # Calculate the argument of the maximum value of the echo  
+  # TODO: Might be optimized using a value closer to the beginning of the echo
+  arg_max = argmax(echoes) 
+  # Calculate the zero crossings of the echo
+  t_zeros = zero_crossings(echoes)
+  
+  # Interval for the zero crossings difference. The EXCITATION_PERIOD is used
+  # beacause this interval uses information of the frequency of the signal and
+  # the samping rate of the ADC.
+  interval = np.arange(np.floor(dpp.EXCITATION_PERIOD/2) - 2, 
+                       np.floor(dpp.EXCITATION_PERIOD/2) + 3, 
+                       4)
+                         
+  for direction in dpp.DIRECTIONS:
+    # Calculate the index in t_zeros corresponding to the maximum amplitude 
+    # of the received echo
+    arg[direction] = np.argwhere(arg_max[direction] > t_zeros[direction])[-1][-1]
+    arg_init[direction] = arg[direction]
+  
+    # While the difference of t_zeros lies inside the interval, we substract 1
+    # from the argument. The third condition considers the case where the
+    # difference bewteen to zero crossings is zero.
+    while ((np.diff(t_zeros[direction])[arg[direction]] <= interval[1]) and 
+           (np.diff(t_zeros[direction])[arg[direction]] >= interval[0]) or
+           (np.diff(t_zeros[direction])[arg[direction]] == 0)):
+      arg[direction] -=1
+  
+    time_of_flight[direction] = t_zeros[direction][arg[direction]]
+  
+  return time_of_flight, arg, arg_init

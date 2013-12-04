@@ -20,19 +20,24 @@ import numpy as np
 import logging
 
 # Directions of sonic measurement
-DIRECTIONS = ('NORTH', 'SOUTH')
+DIRECTIONS = ('NORTH', 'SOUTH', 'EAST', 'WEST')
 # Maximum length of the train of excitation pulses
-EXCITATION_LENGTH = 250
+EXCITATION_LENGTH = 300
 # Maximum length of echo
 ECHO_LENGTH = 1400
 # Maximum length of excitation pulses plus echo
-SIGNAL_LENGTH = 2200
+SIGNAL_LENGTH = 2000
 # Number of excitation pulses in the excitation train
 NUMBER_OF_PULSES = 3
+# Sampling rate in [Samples/s]
+SAMPLING_RATE = 937500
+# Transducer natural frequency in [Hz]
+TRANSDUCER_FREQUENCY = 40000
 # Signal period in samples
-EXCITATION_PERIOD = 36
+EXCITATION_PERIOD = SAMPLING_RATE/TRANSDUCER_FREQUENCY
 # Maximum amplitude of excitation pulses
 PULSE_AMPLITUDE = 1976
+
 
 def frame_sanity_check(frame):
   """ Prevents non-desired behavior where the collected frame does not include
@@ -46,7 +51,7 @@ def frame_sanity_check(frame):
   if np.max(np.diff(frame)) > PULSE_AMPLITUDE:
     # If the condition is met, we check that there are NUMBER_OF_PULSES pulses
     # in the excitation stage of the frame.
-    for i in range(NUMBER_OF_PULSES):
+    for i in range(NUMBER_OF_PULSES - 1): # TODO: Check problem
       idx = edge_detection(frame)
       # We check that the signal has a certain period that is related to 
       # the variable EXCITATION_PERIOD.     
@@ -98,7 +103,7 @@ def split_frame(frame):
 
     else:
       message = 'Lost ' + direction + ' measurement...'
-      logging.info(message)
+      print message
       return None
 
   return echoes  
