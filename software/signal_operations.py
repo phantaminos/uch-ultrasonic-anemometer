@@ -147,3 +147,18 @@ def time_of_flight_phase_detection(echoes):
     time_of_flight[direction] = t_zeros[direction][arg[direction]]
   
   return time_of_flight, arg, arg_init
+  
+def time_of_flight_threshold(echoes, threshold):
+  echoes_minus_threshold = dict()
+  # To reuse the zero_crossings function, we substract the threshold from the
+  # th echo and use zero_crossings to find the first crossing of the echo and
+  # the threshold.
+  for direction in dpp.DIRECTIONS:
+    echoes_minus_threshold[direction] = echoes[direction] - threshold
+  
+  threshold_crossings = zero_crossings(echoes_minus_threshold)
+  for direction in dpp.DIRECTIONS:
+    threshold_crossings[direction] = threshold_crossings[direction][0]
+    
+  return threshold_crossings
+    
