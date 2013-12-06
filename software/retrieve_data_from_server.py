@@ -39,29 +39,32 @@ parser = argparse.ArgumentParser(description =
 parser.add_argument('-m',
                     '--measurements', 
                     type = int,
+                    default = 10,
                     help = 'No. of measurements in every direction.')
 parser.add_argument('-v',
                    '--velocity',
-                   type = int,
+                   default = 0,
                    help = 'Wind velocity for file name.')
+parser.add_argument('-c',
+                    '--calibration',
+                    type = bool,
+                    default = False,
+                    help = 'Calibration boolean. Measure noise from ' +
+                    'the electronics.')
 parser.add_argument('-i',
                    '--ip',
                    type = str,
+                   default = "192.168.0.139", # Static IP
                    help = 'IP address of the Raspberry Pi.')
 
-# Parse arguments and assign values if missing. Exit if critical values are
-# missing
+# Parse arguments.
 args = parser.parse_args()
-if args.measurements == None:
-  args.measurements  = 10
-if args.velocity == None:
-  print "Must enter velocity."
-  exit(1)
-if args.ip == "":
-  print "Must give an IP address."
-  exit(1)
 
 # Retrieve data
 for measurement in range(args.measurements):
-  file_name = './server_samples/v_%02d_%04d.nc'%(args.velocity, measurement)
-  urllib.urlretrieve('http://' + args.ip + ':8000/', file_name)
+  if not args.calibration:
+    file_name = './server_samples/v_%02d_%04d.nc'%(args.velocity, measurement)
+  else:
+    file_name = './server_samples/v_--_%04d.nc'%(measurement)
+  print "Retrieving", file_name  
+#  urllib.urlretrieve('http://' + args.ip + ':8000/', file_name)
