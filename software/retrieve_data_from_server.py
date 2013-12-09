@@ -43,6 +43,7 @@ parser.add_argument('-m',
                     help = 'No. of measurements in every direction.')
 parser.add_argument('-v',
                    '--velocity',
+                   type = int,
                    default = 0,
                    help = 'Wind velocity for file name.')
 parser.add_argument('-c',
@@ -67,4 +68,4 @@ for measurement in range(args.measurements):
   else:
     file_name = './server_samples/v_--_%04d.nc'%(measurement)
   print "Retrieving", file_name  
-#  urllib.urlretrieve('http://' + args.ip + ':8000/', file_name)
+  urllib.urlretrieve('http://' + args.ip + ':8000/', file_name)
