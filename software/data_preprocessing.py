@@ -17,7 +17,6 @@
 # Authors: Karel Mundnich <kmundnic@ing.uchile.cl>
 
 import numpy as np
-import logging
 
 # Directions of sonic measurement
 DIRECTIONS = ('NORTH', 'SOUTH', 'EAST', 'WEST')
@@ -37,7 +36,12 @@ TRANSDUCER_FREQUENCY = 40000
 EXCITATION_PERIOD = SAMPLING_RATE/TRANSDUCER_FREQUENCY
 # Maximum amplitude of excitation pulses
 PULSE_AMPLITUDE = 1976
-
+# Chemical constants
+gamma = 1.4 # []
+T = 293 # [K]
+Rd = 287 # [J/kg*K]
+# Speed of sound: Vs = sqrt(gamma*Temperature*Rd)
+V_S = np.sqrt(1.4*T*Rd)
 
 def frame_sanity_check(frame):
   """ Prevents non-desired behavior where the collected frame does not include

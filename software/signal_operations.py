@@ -18,6 +18,7 @@
 
 import data_preprocessing as dpp
 import numpy as np
+import matplotlib.pyplot as plt
 
 def average(echoes):
   """ Average echoes on an echo data structure (list of dictionaries) and
@@ -106,10 +107,10 @@ def argmax(echoes):
 
   return argmax
 
-def time_of_flight_phase_detection(echoes):
-  """ Calculate the time of flight for an echo structure through phase detection
-      using the zero crossings of the signal.
-      This function returns the time of flight of the preprocessed echo, the 
+def samples_of_flight_phase_detection(echoes):
+  """ Calculate the samples of flight for an echo structure through phase 
+      detection using the zero crossings of the signal.
+      This function returns the samples of flight of the preprocessed echo, the 
       argument of the maximum value of the echo, and the argument of the time of
       flight.
   """  
@@ -124,7 +125,7 @@ def time_of_flight_phase_detection(echoes):
   t_zeros = zero_crossings(echoes)
   
   # Interval for the zero crossings difference. The EXCITATION_PERIOD is used
-  # beacause this interval uses information of the frequency of the signal and
+  # because this interval uses information of the frequency of the signal and
   # the samping rate of the ADC.
   interval = np.arange(np.floor(dpp.EXCITATION_PERIOD/2) - 2, 
                        np.floor(dpp.EXCITATION_PERIOD/2) + 3, 
@@ -148,15 +149,15 @@ def time_of_flight_phase_detection(echoes):
   
   return time_of_flight, arg, arg_init
   
-def time_of_flight_threshold(echoes, threshold):
-  """ Calculated the time in which the echoes cross a given threshold value.
+def samples_of_flight_threshold(echoes, threshold):
+  """ Calculated the sample in which the echoes cross a given threshold value.
   """  
   echoes_minus_threshold = dict()
   # To reuse the zero_crossings function, we substract the threshold from the
-  # th echo and use zero_crossings to find the first crossing of the echo and
+  # the echo and use zero_crossings to find the first crossing of the echo and
   # the threshold.
   for direction in dpp.DIRECTIONS:
-    echoes_minus_threshold[direction] = echoes[direction] - threshold
+    echoes_minus_threshold[direction] = echoes[direction] - threshold[direction]
   
   # Use zero_crossings to calculate the threshold crossings, and return only the
   # first value of the array.   
@@ -165,4 +166,89 @@ def time_of_flight_threshold(echoes, threshold):
     threshold_crossings[direction] = threshold_crossings[direction][0]
     
   return threshold_crossings
+  
+def samples_to_time(samples):
+  """ Convert number of sample to time, using dpp.SAMLING_RATE.
+  """
+  time_of_flight = dict()
+  for direction in dpp.DIRECTIONS:
+    time_of_flight[direction] = samples[direction]/dpp.SAMPLING_RATE
     
+  return time_of_flight
+  
+def wind_speed_from_time_of_flight(time_of_flight, distance1, distance2):
+  """ Calculate the wind_speed using the time of flight.
+  """
+  wind_speed = dict()  
+  wind_speed['NS'] = distance1/2*(1.0/time_of_flight['NORTH'] - 1.0/time_of_flight['SOUTH'])
+  wind_speed['EW'] = distance2/2*(1.0/time_of_flight['WEST'] - 1.0/time_of_flight['EAST'])
+  
+  return wind_speed
+  
+def speed_of_sound_from_time_of_flight(time_of_flight, distance1, distance2):
+  """ Calculate the wind_speed using the time of flight.
+  """
+  speed_of_sound = dict()  
+  speed_of_sound['NS'] = distance1/2*(1.0/time_of_flight['NORTH'] + 1.0/time_of_flight['SOUTH'])
+  speed_of_sound['EW'] = distance2/2*(1.0/time_of_flight['WEST'] + 1.0/time_of_flight['EAST'])
+  
+  return speed_of_sound
+  
+def normalize(echoes):
+  """ Normalize the echoes dict().
+  """  
+  for direction in dpp.DIRECTIONS:
+    echoes[direction] = echoes[direction]/np.max(echoes[direction])
+  return echoes
+  
+def wind_speed(echoes_00, echoes_xx, threshold, distance):
+  """ Calculate the wind speed based upon the comparisson of the phase of an
+      echo with respect to a reference echo. The phase comparisson is performed
+      in the vicinity of a threshold.
+      The echoes are normalized for a consequent threshld usage.
+  """  
+  # Prepare the measurements by averaging, differentiating to remove the offset
+  # and normalizing to be able to easily use a threshold.
+  echoes_00 = normalize(differentiate(average(echoes_00)))
+  echoes_xx = normalize(differentiate(average(echoes_xx)))
+  
+  # First, we calculate the number of samples until the echo meets the threshold
+  samples_of_flight_threshold_00 = \
+      samples_of_flight_threshold(echoes_00, threshold)
+  samples_of_flight_threshold_xx = \
+      samples_of_flight_threshold(echoes_xx, threshold)
+
+  # Now we calculate the zero crossings to calculate the phase difference 
+  # between the received echo and a reference echo.
+  zeros_00 = zero_crossings(echoes_00)
+  zeros_xx = zero_crossings(echoes_xx)
+  
+  arg_00 = dict()
+  arg_xx = dict()
+  speed = dict()
+  delta_time = dict()
+  t1 = dict()
+  direction = dict()
+
+  for direction in dpp.DIRECTIONS:
+    t1[direction] = distance[direction]/dpp.V_S
+    # Calculate the index in zeros_xx corresponding to the zero crossings right
+    # before the threshold crossing.
+    # The next ten differences between the reference echo and the received echo
+    # are avreaged to get the pahse difference (delta time) between both echoes.
+    arg_00[direction] = np.argwhere(samples_of_flight_threshold_00[direction] > 
+                                    zeros_00[direction])[-1][-1]
+    arg_xx[direction] = np.argwhere(samples_of_flight_threshold_xx[direction] >
+                                    zeros_xx[direction])[-1][-1]
+    delta_time[direction] = \
+        np.mean(zeros_xx[direction][arg_xx[direction]:arg_xx[direction]+10] -
+        zeros_00[direction][arg_00[direction]:arg_00[direction]+10])/\
+        dpp.SAMPLING_RATE  
+    if direction == 'NORTH' or direction == 'SOUTH':
+      speed[direction] = distance[direction]*delta_time[direction]/\
+          (t1[direction]*(t1[direction] + delta_time[direction]))
+    else: # EAST or WEST
+      speed[direction] = distance[direction]*delta_time[direction]/\
+          (t1[direction]*(t1[direction] + delta_time[direction]))
+
+  return speed
