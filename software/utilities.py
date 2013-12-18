@@ -21,42 +21,25 @@ import numpy as np
 import matplotlib.pyplot as plt
 import data_preprocessing as dpp
 
-def load_data_from_file(file_path):
-  """ Loads data from and NetCDF file and returns a numpy.ndarray with the full
-      data frame.
-  """
-  # Open data
-  f = netcdf.netcdf_file(file_path, 'r')
-  # Load data into a variable  
-  aux = f.variables['frame']
-  # Copy data into a new numpy array for security
-  measurement = np.array(aux.data)
-  f.close()
-  return measurement
   
-def load_echoes_from_file(folder_path,
-                          wind_velocity,
-                          number_of_measurements):
-  """ Load an echoes data structure from NetCDF files using load_data_from_file.
+def load_echoes_from_file(filename,
+                          measurements):
+  """ Load an echoes data structure from file filename. The echos included in
+      the result are those indicated by the list measurement.
   """
-  echoes = []  
-  
-  for measurement_number in range(number_of_measurements):
-    # Load data
-    if wind_velocity == None:
-      file_path = folder_path + '/v_--_%04d.nc'%(measurement_number)
-    else:
-      file_path = folder_path + '/v_%02d_%04d.nc'%(wind_velocity,
-                                                   measurement_number)
-    measurement = load_data_from_file(file_path)
-    
+  echoes = []
+
+  # Load data
+  data = np.load(filename)
+
+  for number_of_frame in measurements:
     # Concatenate the new list from split_frame into the echoes list
-    aux_echo = dpp.split_frame(measurement)
+    aux_echo = dpp.split_frame(data[number_of_frame])
     if aux_echo != None:
       echoes = echoes + aux_echo
-      
+
   return echoes
-  
+
 def plot_echoes(echoes, threshold, figure, color):
   """ Plot echoes dict().
   """    
