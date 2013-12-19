@@ -16,14 +16,12 @@
 #
 # Authors: Karel Mundnich <kmundnic@ing.uchile.cl>
 
-from scipy.io import netcdf
 import numpy as np
 import matplotlib.pyplot as plt
 import data_preprocessing as dpp
 
   
-def load_echoes_from_file(filename,
-                          measurements):
+def load_echoes_from_file(filename, measurements):
   """ Load an echoes data structure from file filename. The echos included in
       the result are those indicated by the list measurement.
   """

@@ -17,21 +17,22 @@
 # Authors: Karel Mundnich <kmundnic@ing.uchile.cl>
 
 import utilities
-import numpy as np
 import unittest
 
 
 class TestUtilities(unittest.TestCase):
   def setUp(self):
-    # Data paths
+    # Data path
     self.file_noecho = './test_data/frame_no_echo.npy'
+    # Measurements must be a list
+    self.measurements = range(1)
 
-  def test_load_data_from_file(self):
-    self.assertEqual(type(utilities.load_data_from_file(self.file_noecho)),
-                     np.ndarray)
-    self.assertNotEqual(type(self.echoes_noecho), dict)
-    self.assertRaises(IOError, utilities.load_data_from_file,
-                      'non_existent_file.nc')
+  def test_load_echoes_from_file(self):
+    self.assertEqual(type(utilities.load_echoes_from_file(self.file_noecho,
+                                                          self.measurements)),
+                     list)
+    self.assertNotEqual(type(self.file_noecho), dict)
+    self.assertRaises(IOError, utilities.load_echoes_from_file, 'non_existent_file.npy', self.measurements)
 
 if __name__ == '__main__':
   unittest.main()
