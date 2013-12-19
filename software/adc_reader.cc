@@ -22,13 +22,11 @@ extern "C" {
 #include <mpsse.h>
 }
 
-#define FRAME_SIZE 100000
-
 
 ADCReader::ADCReader()
   : adc_(NULL) {
   adc_ = MPSSE(SPI0, kSpiClock, MSB);
-  reading_buffer_ = new int16_t[FRAME_SIZE];
+  reading_buffer_ = new int16_t[kFrameSize];
 }
 
 ADCReader::~ADCReader() {
@@ -40,10 +38,11 @@ void ADCReader::GetFrame(double *data, int data_size) {
   if (adc_ != NULL) {
     if (adc_->open) {
       Start(adc_);
-      FastRead(adc_, reinterpret_cast<char*>(reading_buffer_), FRAME_SIZE);
+      FastRead(adc_, reinterpret_cast<char*>(reading_buffer_),
+               kFrameSize*sizeof(int16_t));
       Stop(adc_);
 
-      for (int i = 0; i < FRAME_SIZE, i < data_size; i++) {
+      for (int i = 0; i < kFrameSize, i < data_size; i++) {
         data[i] = ConvertFromADCFormat(reading_buffer_[i]);
       }
     }
@@ -66,4 +65,10 @@ double ADCReader::ConvertFromADCFormat(int16_t data) {
   *left_pointer = right;
   *right_pointer = left;
   return data;
+}
+
+void ADCReader::GetNFrames(double *buffer, int repetitions, int samples) {
+  for (int i=0; i<repetitions; i++) {
+    GetFrame(buffer+i*samples, samples);
+  }
 }

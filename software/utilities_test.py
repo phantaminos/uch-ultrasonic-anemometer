@@ -20,18 +20,18 @@ import utilities
 import numpy as np
 import unittest
 
+
 class TestUtilities(unittest.TestCase):
-  
   def setUp(self):
     # Data paths
-    self.file_noecho = './test_data/frame_no_echo.nc'
-    
+    self.file_noecho = './test_data/frame_no_echo.npy'
+
   def test_load_data_from_file(self):
     self.assertEqual(type(utilities.load_data_from_file(self.file_noecho)),
                      np.ndarray)
     self.assertNotEqual(type(self.echoes_noecho), dict)
-    self.assertRaises(IOError, utilities.load_data_from_file, 
+    self.assertRaises(IOError, utilities.load_data_from_file,
                       'non_existent_file.nc')
-                     
+
 if __name__ == '__main__':
   unittest.main()

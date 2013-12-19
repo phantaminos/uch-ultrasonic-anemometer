@@ -21,6 +21,9 @@
 
 #include <cstdint>
 
+// Frame size in number of samples.
+static const int kFrameSize = 10000;
+
 struct mpsse_context;
 
 // This class provides access to the hardware of the anemometer.
@@ -40,6 +43,10 @@ class ADCReader {
   void GetFrame(double *buffer, int buffer_size);
   // Converts a single reading from the ADC format to double.
   static double ConvertFromADCFormat(int16_t data);
+
+  // Perform repetitions calls to get frame and store them in the matrix pointed
+  // by buffer.
+  void GetNFrames(double *buffer, int repetition, int samples);
 
  private:
   // Communication interface with the ADC.
