@@ -45,9 +45,9 @@ def plot_echoes(echoes, threshold, figure, color):
   plt.figure(figure)
   i = 1
   # The subplot number is created considering 2 rows and a variable number of
-  # columns depending in the list dpp.DIRECTIONS.
-  for direction in dpp.DIRECTIONS:
-    subplot[direction] = np.int(2*100 + len(dpp.DIRECTIONS)/2*10 + i)
+  # columns depending in the list dpp.CARDINAL_POINTS.
+  for direction in dpp.CARDINAL_POINTS:
+    subplot[direction] = np.int(2*100 + len(dpp.CARDINAL_POINTS)/2*10 + i)
     plt.subplot(subplot[direction])
     plt.plot(echoes[direction], color)
     plt.plot(np.ones(len(echoes[direction]))*threshold[direction], 'g')

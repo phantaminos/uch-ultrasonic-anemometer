@@ -18,10 +18,12 @@
 
 import numpy as np
 
-# Directions of sonic measurement
-DIRECTIONS = ('NORTH', 'SOUTH', 'EAST', 'WEST')
+# Axes
+AXES = [['NORTH', 'SOUTH'], ['EAST', 'WEST']]
+# CARDINAL_POINTS of sonic measurement. This line of code flattens AXES
+CARDINAL_POINTS = [item for sublist in AXES for item in sublist]
 # Maximum length of the train of excitation pulses
-EXCITATION_LENGTH = 300
+EXCITATION_LENGTH = 500
 # Maximum length of echo
 ECHO_LENGTH = 1400
 # Maximum length of excitation pulses plus echo
@@ -36,9 +38,11 @@ TRANSDUCER_FREQUENCY = 40000
 EXCITATION_PERIOD = SAMPLING_RATE/TRANSDUCER_FREQUENCY
 # Maximum amplitude of excitation pulses
 PULSE_AMPLITUDE = 1976
+# Sampling correction
+SAMPLING_CORRECTION = 10642.6471793/10000
 # Chemical constants
 gamma = 1.4 # []
-T = 293 # [K]
+T = 298 # [K]
 Rd = 287 # [J/kg*K]
 # Speed of sound: Vs = sqrt(gamma*Temperature*Rd)
 V_S = np.sqrt(1.4*T*Rd)
@@ -83,13 +87,13 @@ def split_frame(frame):
   """ Splits the complete measurement frame into several echoes that are
       returned in a list of dictionaries. Each list item represents a 
       measurement, and each dictionary entry contains a key in 
-      DIRECTIONS = ('NORTH','SOUTH') and a value consisting of a numpy array
+      CARDINAL_POINTS = ('NORTH','SOUTH') and a value consisting of a numpy array
       that includes the echo for that measurement.
   """
   echo = dict() # Create an echo dictionary
   echoes = [] # Create an echoes list.
 
-  for direction in DIRECTIONS:
+  for direction in CARDINAL_POINTS:
     # Perform sanity check for only 1 signal in frame.
     if frame_sanity_check(frame[0:SIGNAL_LENGTH]):
       # Detect the edge of the excitation pulse
