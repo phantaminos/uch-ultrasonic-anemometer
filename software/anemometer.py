@@ -94,11 +94,59 @@ class Anemometer:
     
     # Save calibration information into a file
     np.savez('delta_in_samples', delta_in_samples, dpp.CARDINAL_POINTS)
+    np.savez('distance', distance, dpp.CARDINAL_POINTS)
 
 
   def measure_wind_speed(self):
     """ This function should be called every time the user wants to measure
-        the wind speed. The return value is a vector wit the wind in every
-        component.
+        the wind speed. The return value is a list with the wind for every axis.
     """
-    pass
+    # Load data from the ADC
+    reader = adc_reader.ADCReader()
+    data = np.zeros((self.frames_per_measure, adc_reader.kFrameSize))
+    reader.GetNFrames(data)
+    
+    echoes = []
+    for number_of_frame in self.frames_per_measure:
+      aux_echo = dpp.split_frame(data[number_of_frame])
+      if aux_echo != None:
+        echoes = echoes + aux_echo
+
+    # Prepare the measurements by averaging, differentiating to remove the 
+    # offset and normalizing to be able to easily use a threshold.
+    echoes = so.normalize(so.differentiate(so.average(echoes)))
+    
+    # First, we calculate the number of samples until the echo meets the 
+    # threshold
+    samples_of_flight_threshold = so.samples_of_flight_threshold(echoes, 
+                                                                 so.THRESHOLD)
+  
+    # Now we calculate the zero crossings to calculate the phase difference 
+    # between the received echo and a reference echo.
+    zeros = so.zero_crossings(echoes)
+    
+    arg = dict()
+    speed = []
+    ToF = dict()
+  
+    # Load calibration file
+    delta_in_samples = np.load('delta_in_samples')
+    distance = np.load('distance')
+
+    for direction in dpp.CARDINAL_POINTS:
+      # Calculate the index in zeros_xx corresponding to the zero crossings 
+      # right before the threshold crossing.
+      arg[direction] = np.argwhere(samples_of_flight_threshold[direction] >
+                                      zeros[direction])[-1][-1]
+  
+      # Calculate the time of flight considering the use of the derivative.   
+      ToF[direction] = (zeros[direction][arg[direction]] -
+          delta_in_samples[direction] + dpp.EXCITATION_LENGTH + 
+          dpp.EXCITATION_PERIOD/4)/dpp.SAMPLING_RATE
+  
+    # Create the list of speeds for each direction.
+    for direction in dpp.AXES:
+      speed.append((distance[direction[0]]/2)*(1/ToF[direction[0]] - 
+          1/ToF[direction[1]]))
+  
+    return speed
