@@ -26,6 +26,7 @@ include_directories(${PYTHON_INCLUDE_PATH})
 
 #python targets
 add_python_source(
+  anemometer.py
   data_logger.py
   data_preprocessing.py
   data_recorder.py
