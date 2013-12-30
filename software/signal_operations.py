@@ -17,7 +17,6 @@
 # Authors: Karel Mundnich <kmundnic@ing.uchile.cl>
 
 import data_preprocessing as dpp
-import utilities
 import numpy as np
 
 THRESHOLD = dict()
@@ -265,13 +264,7 @@ def delta_samples(echoes, threshold, ToF):
       
   return delta_samples
   
-def calibration(distance, temperature, pressure, relative_humidity):
-  number_of_measurements = 100
-
-  # TODO: Load data from the ADC instead of file!
-  file_name = 'blabla'
-  echoes = utilities.load_echoes_from_file(file_name, number_of_measurements)
-
+def calibration(echoes, distance, temperature, pressure, relative_humidity):
   # Thermodynamic operations
   Rd = 287.04 # [J kg^-1 K^-1], Gas constant for dry air   
   Rv = 461.50 # [J kg^-1 K^-1], Gas constant for water vapor
@@ -296,8 +289,7 @@ def calibration(distance, temperature, pressure, relative_humidity):
   for direction in dpp.CARDINAL_POINTS:
     ToF[direction] = distance[direction]/speed_of_sound
 
-  # Load echoes and calculate the time delta in samples
-  echoes = utilities.load_echoes_from_file(file_name, number_of_measurements)
+  # Calculate the time delta in samples
   delta_in_samples = delta_samples(echoes, THRESHOLD, ToF)
   
   # Save calibration information into a file
