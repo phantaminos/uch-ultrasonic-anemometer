@@ -27,9 +27,9 @@ class Anemometer:
       users of this library.
   """
 
-  def __init__(self, frames_per_measurement = 50):
+  def __init__(self, frames_per_measurement = 100):
     self.frames_per_measurement = frames_per_measurement
-    self.data = np.zeros((self.frames_per_measure, adc_reader.kFrameSize))
+    self.data = np.zeros((self.frames_per_measurement, adc_reader.kFrameSize))
     self.reader = adc_reader.ADCReader()    
 
   def calibrate(self):
@@ -43,7 +43,7 @@ class Anemometer:
     self.reader.GetNFrames(self.data)    
     
     echoes = []
-    for number_of_frame in self.frames_per_measure:
+    for number_of_frame in range(self.frames_per_measurement):
       aux_echo = dpp.split_frame(self.data[number_of_frame])
       if aux_echo != None:
         echoes = echoes + aux_echo
@@ -54,8 +54,7 @@ class Anemometer:
     # Pressure in hPa
     pressure = input('Presure in [hPa]: ')
     # Relative humidity as a decimal number in [0,1] interval
-    relative_humidity = input('Relativ humidity as a decimal number in' + 
-        + '[0,1]:')
+    relative_humidity = input('Relativ humidity in [0,1]: ')
 
     distance = dict()
     # Create a dict with keys in flattened dpp.AXES, asking the user
@@ -66,10 +65,22 @@ class Anemometer:
       for dir in direction:
         distance[dir] = aux_distance
     
-    # Save calibrate information (deltas and distance between transucers) into a
-    # file
-    so.calibration(echoes, distance, temperature, pressure, relative_humidity)
-    np.savez('distance', distance, dpp.CARDINAL_POINTS)
+    # Save calibration information (deltas and distance between transucers)
+    # into a file
+    delta_in_samples_aux = []
+    distance_aux = []
+    delta_in_samples = so.calibration(echoes,
+                                      distance,
+                                      temperature,
+                                      pressure,
+                                      relative_humidity)
+
+    for direction in dpp.CARDINAL_POINTS:
+      delta_in_samples_aux.append(delta_in_samples[direction])
+      distance_aux.append(distance[direction])
+      delta_in_samples_aux.append(delta_in_samples[direction])
+    np.save('delta_in_samples.npy', delta_in_samples_aux)
+    np.save('distance.npy', distance_aux)
 
 
   def measure_wind_speed(self):
@@ -80,17 +91,33 @@ class Anemometer:
     self.reader.GetNFrames(self.data)
     
     echoes = []
-    for number_of_frame in self.frames_per_measure:
+    for number_of_frame in range(self.frames_per_measurement):
       aux_echo = dpp.split_frame(self.data[number_of_frame])
       if aux_echo != None:
         echoes = echoes + aux_echo
 
     # Load calibration data
-    delta_in_samples = np.load('delta_in_samples')
-    distance = np.load('distance')
+    delta_in_samples = dict()
+    try:  
+      delta_in_samples_aux = list(np.load('delta_in_samples.npy'))
+    except IOError:
+      print "Calibrate first!"
+      exit(0)
+    for direction in dpp.CARDINAL_POINTS:
+      delta_in_samples[direction] = delta_in_samples_aux.pop(0)
+
+    distance = dict()
+    try:
+      dist = np.load('distance.npy')
+    except IOError:
+      print "Calibrate first!"
+      exit(0)
+    dist = list(dist)
+    for direction in dpp.CARDINAL_POINTS:
+      distance[direction] = dist.pop(0)
 
     speed = so.calculate_wind_speed(echoes,
-                                    so.threshold,
+                                    so.THRESHOLD,
                                     delta_in_samples,
                                     distance)    
       

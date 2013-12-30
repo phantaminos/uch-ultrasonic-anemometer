@@ -292,5 +292,5 @@ def calibration(echoes, distance, temperature, pressure, relative_humidity):
   # Calculate the time delta in samples
   delta_in_samples = delta_samples(echoes, THRESHOLD, ToF)
   
-  # Save calibration information into a file
-  np.savez('delta_in_samples', delta_in_samples, dpp.CARDINAL_POINTS)
+  return delta_in_samples  
+
