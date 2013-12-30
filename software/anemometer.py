@@ -27,7 +27,7 @@ class Anemometer:
       users of this library.
   """
 
-  def __init__(self, frames_per_measurement = 50):
+  def __init__(self, frames_per_measurement = 100):
     self.frames_per_measurement = frames_per_measurement
     self.data = np.zeros((self.frames_per_measure, adc_reader.kFrameSize))
     self.reader = adc_reader.ADCReader()    
