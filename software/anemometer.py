@@ -29,7 +29,8 @@ class Anemometer:
 
   def __init__(self, frames_per_measurement = 50):
     self.frames_per_measurement = frames_per_measurement
-    pass
+    self.data = np.zeros((self.frames_per_measure, adc_reader.kFrameSize))
+    self.reader = adc_reader.ADCReader()    
 
   def calibrate(self):
     """ This function must be called once for every particular piece of
@@ -39,14 +40,11 @@ class Anemometer:
         Data is read from the ADC. The anemometer must be placed in an
         environment with no wind.
     """
-    # Load data from the ADC
-    reader = adc_reader.ADCReader()
-    data = np.zeros((self.frames_per_measure, adc_reader.kFrameSize))
-    reader.GetNFrames(data)
+    self.reader.GetNFrames(self.data)    
     
     echoes = []
     for number_of_frame in self.frames_per_measure:
-      aux_echo = dpp.split_frame(data[number_of_frame])
+      aux_echo = dpp.split_frame(self.data[number_of_frame])
       if aux_echo != None:
         echoes = echoes + aux_echo
   
@@ -79,13 +77,11 @@ class Anemometer:
         the wind speed. The return value is a list with the wind for every axis.
     """
     # Load data from the ADC
-    reader = adc_reader.ADCReader()
-    data = np.zeros((self.frames_per_measurement, adc_reader.kFrameSize))
-    reader.GetNFrames(data)
+    self.reader.GetNFrames(self.data)
     
     echoes = []
     for number_of_frame in self.frames_per_measure:
-      aux_echo = dpp.split_frame(data[number_of_frame])
+      aux_echo = dpp.split_frame(self.data[number_of_frame])
       if aux_echo != None:
         echoes = echoes + aux_echo
 
