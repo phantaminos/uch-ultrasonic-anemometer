@@ -20,5 +20,5 @@
 
 import anemometer
 
-anemometer_connection = anemometer.Anemometer(20)
+anemometer_connection = anemometer.Anemometer()
 anemometer_connection.calibrate()
