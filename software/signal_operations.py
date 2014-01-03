@@ -265,6 +265,21 @@ def delta_samples(echoes, threshold, ToF):
   return delta_samples
   
 def calibration(echoes, distance, temperature, pressure, relative_humidity):
+  # Calculate the time of flight
+  speed = speed_of_sound(temperature, pressure, relative_humidity)
+  ToF = dict()
+  for direction in dpp.CARDINAL_POINTS:
+    ToF[direction] = distance[direction]/speed
+
+  # Calculate the time delta in samples
+  delta_in_samples = delta_samples(echoes, THRESHOLD, ToF)
+  
+  return delta_in_samples
+  
+def speed_of_sound(temperature, pressure, relative_humidity):
+  temperature = temperature + 273.15 # Convert from Celsius to Kelvin  
+  print "T =", temperature
+  
   # Thermodynamic operations
   Rd = 287.04 # [J kg^-1 K^-1], Gas constant for dry air   
   Rv = 461.50 # [J kg^-1 K^-1], Gas constant for water vapor
@@ -272,25 +287,19 @@ def calibration(echoes, distance, temperature, pressure, relative_humidity):
   gamma = 1.4
 
   # According to Hyland and Wexler (1983), 173 - 473.
-  e_sat =  np.exp(-0.58002206*(10**4)/temperature \
-                + 0.13914993*10*temperature**(0) \
-		     - 0.48640239*(10**-1)*temperature \
-		     + 0.41764768*(10**-4)*temperature**2 \
-		     - 0.14452093*(10**-7)*temperature**3 \
-		     + 0.65459673*10*np.log(temperature))/100
+  e_sat = np.exp(-0.58002206 * np.power(10.0,  4.0) / temperature
+               +  0.13914993 * np.power(10.0,  1.0) * np.power(temperature, 0.0)
+               -  0.48640239 * np.power(10.0, -1.0) * temperature 
+               +  0.41764768 * np.power(10.0, -4.0) * np.power(temperature, 2.0)
+               -  0.14452093 * np.power(10.0, -7.0) * np.power(temperature, 3.0)
+               +  0.65459673 * 10 * np.log(temperature)) / 100
+  print "e_sat =", e_sat
 
   r_sat = epsilon*e_sat/(pressure - e_sat)
   r = r_sat*relative_humidity
+  print "r =", r
+  
   virtual_temperature = temperature*(1 + r/epsilon)/(1 + r)
-  speed_of_sound = np.sqrt(gamma*Rd*virtual_temperature)
+  speed = np.sqrt(gamma*Rd*virtual_temperature)
   
-  # Calculate the time of flight
-  ToF = dict()
-  for direction in dpp.CARDINAL_POINTS:
-    ToF[direction] = distance[direction]/speed_of_sound
-
-  # Calculate the time delta in samples
-  delta_in_samples = delta_samples(echoes, THRESHOLD, ToF)
-  
-  return delta_in_samples  
-
+  return speed
