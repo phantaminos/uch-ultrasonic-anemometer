@@ -25,4 +25,3 @@ anemometer_connection = anemometer.Anemometer(10)
 
 while True:
   print "Wind speed,", anemometer_connection.measure_wind_speed()
-  time.sleep(1)
