@@ -48,13 +48,13 @@ class Anemometer:
       if aux_echo != None:
         echoes = echoes + aux_echo
   
-    # Ask user fornecessary data
+    # Ask user for necessary data:
     # Temperature in celsius
     temperature = input('Temperature in Celsius: ')
     # Pressure in hPa
     pressure = input('Presure in [hPa]: ')
     # Relative humidity as a decimal number in [0,1] interval
-    relative_humidity = input('Relativ humidity in [0,1]: ')
+    relative_humidity = input('Relative humidity in [0,1]: ')
 
     distance = dict()
     # Create a dict with keys in flattened dpp.AXES, asking the user
@@ -87,21 +87,28 @@ class Anemometer:
     """ This function should be called every time the user wants to measure
         the wind speed. The return value is a list with the wind for every axis.
     """
-    # Load data from the ADC
-    self.reader.GetNFrames(self.data)
-    
+
     echoes = []
-    for number_of_frame in range(self.frames_per_measurement):
-      aux_echo = dpp.split_frame(self.data[number_of_frame])
-      if aux_echo != None:
-        echoes = echoes + aux_echo
+    # In the case when none of the frames pass the sanity check, echoes might be
+    # an empty list.
+    # Bug reported by Federico Flores on 09-01-2014. We must make sure that 
+    # echoes is not an empty list.
+    while len(echoes) == 0:
+      # Load data from the ADC
+      self.reader.GetNFrames(self.data)
+  
+      # Create echoes dict()
+      for number_of_frame in range(self.frames_per_measurement):
+        aux_echo = dpp.split_frame(self.data[number_of_frame])
+        if aux_echo != None:
+          echoes = echoes + aux_echo
 
     # Load calibration data
     delta_in_samples = dict()
     try:  
       delta_in_samples_aux = list(np.load('delta_in_samples.npy'))
     except IOError:
-      print "Calibrate first!"
+      print "Calibrate first! Run clibrate.py with no wind for calibration."
       exit(0)
     for direction in dpp.CARDINAL_POINTS:
       delta_in_samples[direction] = delta_in_samples_aux.pop(0)
@@ -110,7 +117,7 @@ class Anemometer:
     try:
       dist = np.load('distance.npy')
     except IOError:
-      print "Calibrate first!"
+      print "Calibrate first! Run calibrate.py with no wind for calibration."
       exit(0)
     dist = list(dist)
     for direction in dpp.CARDINAL_POINTS:

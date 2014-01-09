@@ -207,7 +207,7 @@ def normalize(echoes):
   return echoes
   
 def calculate_wind_speed(echoes_xx, threshold, delta_in_samples, distance):
-  """ Calculate the wind speed based upon timeo flight calculation using
+  """ Calculate the wind speed based upon time of flight calculation using
       threshold. This function considers the calibration for this purpose.
   """  
   # Prepare the measurements by averaging, differentiating to remove the offset
@@ -229,9 +229,17 @@ def calculate_wind_speed(echoes_xx, threshold, delta_in_samples, distance):
   for direction in dpp.CARDINAL_POINTS:
     # Calculate the index in zeros_xx corresponding to the zero crossings right
     # before the threshold crossing.
-    arg[direction] = np.argwhere(samples_of_flight_threshold_xx[direction] >
+    # Reported bug: There are some cases where the frame passes sanity check,
+    # but the echo in the signal is corrupted. In this case, trying to find the
+    # index in zeros throws an IndexError.
+    try:
+      arg[direction] = np.argwhere(samples_of_flight_threshold_xx[direction] >
                                     zeros[direction])[-1][-1]
-
+    except IndexError:
+      print "signal_operations.py: Corrupt signal, please check connections."
+      for direction in dpp.CARDINAL_POINTS:
+        speed.append(0)
+        return speed
     # Calculate the time of flight considering the use of the derivative.   
     ToF[direction] = (zeros[direction][arg[direction]] -
         delta_in_samples[direction] + dpp.EXCITATION_LENGTH + 
@@ -278,7 +286,6 @@ def calibration(echoes, distance, temperature, pressure, relative_humidity):
   
 def speed_of_sound(temperature, pressure, relative_humidity):
   temperature = temperature + 273.15 # Convert from Celsius to Kelvin  
-  print "T =", temperature
   
   # Thermodynamic operations
   Rd = 287.04 # [J kg^-1 K^-1], Gas constant for dry air   
@@ -293,11 +300,9 @@ def speed_of_sound(temperature, pressure, relative_humidity):
                +  0.41764768 * np.power(10.0, -4.0) * np.power(temperature, 2.0)
                -  0.14452093 * np.power(10.0, -7.0) * np.power(temperature, 3.0)
                +  0.65459673 * 10 * np.log(temperature)) / 100
-  print "e_sat =", e_sat
 
   r_sat = epsilon*e_sat/(pressure - e_sat)
   r = r_sat*relative_humidity
-  print "r =", r
   
   virtual_temperature = temperature*(1 + r/epsilon)/(1 + r)
   speed = np.sqrt(gamma*Rd*virtual_temperature)

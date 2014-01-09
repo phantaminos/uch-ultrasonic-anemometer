@@ -110,7 +110,7 @@ def split_frame(frame):
       echoes.append(echo)
 
     else:
-      message = 'Lost ' + direction + ' measurement...'
+      message = 'data_preprocessing.py: Lost ' + direction + ' measurement...'
       print message
       return None
 
