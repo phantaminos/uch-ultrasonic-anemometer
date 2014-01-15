@@ -59,7 +59,7 @@ def frame_sanity_check(frame):
   if np.max(np.diff(frame)) > PULSE_AMPLITUDE:
     # If the condition is met, we check that there are NUMBER_OF_PULSES pulses
     # in the excitation stage of the frame.
-    for i in range(NUMBER_OF_PULSES - 1): # TODO: Check problem
+    for i in range(NUMBER_OF_PULSES - 1):
       idx = edge_detection(frame)
       # We check that the signal has a certain period that is related to 
       # the variable EXCITATION_PERIOD.     
@@ -87,8 +87,8 @@ def split_frame(frame):
   """ Splits the complete measurement frame into several echoes that are
       returned in a list of dictionaries. Each list item represents a 
       measurement, and each dictionary entry contains a key in 
-      CARDINAL_POINTS = ('NORTH','SOUTH') and a value consisting of a numpy array
-      that includes the echo for that measurement.
+      CARDINAL_POINTS and a value consisting of a numpy array that includes the
+      echo for that measurement.
   """
   echo = dict() # Create an echo dictionary
   echoes = [] # Create an echoes list.
